@@ -1,0 +1,6 @@
+{
+  "extends": "rallycoding",
+  "rules": {
+    "complexity": ["error", 10]
+  }
+}
