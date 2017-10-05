@@ -7,6 +7,8 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { ProductService } from '../services';
 
+import { QuantityButton } from '../components';
+
 export class CartScreen extends Component {
   static navigationOptions = () => ({
     title: 'Cart'
@@ -16,22 +18,32 @@ export class CartScreen extends Component {
     super(props);
 
     this.state = {
-      cartItems: []
+      cartItems: [],
+      cart: null
     };
   }
 
   componentWillMount() {
-    ProductService.cartItems$.subscribe(items => {
-      this.setState({
-        cartItems: items
-      });
-    });
+    // ProductService.cartItems$.subscribe(items => {
+    //   this.setState({
+    //     cartItems: items
+    //   });
+    // });
 
-    this.cartItemCountSubcriber = ProductService.cartItemCount$.subscribe(count => {
-      if (count === 0) {
+    this.cartItemCountSubcriber = ProductService.cart$.subscribe(cart => {
+      this.setState({
+        cart
+      });
+
+      if (cart.count === 0) {
         this.props.navigation.goBack();
       }
     });
+    // this.cartItemCountSubcriber = ProductService.cartItemCount$.subscribe(count => {
+    //   if (count === 0) {
+    //     this.props.navigation.goBack();
+    //   }
+    // });
   }
 
   componentWillUnmount() {
@@ -43,30 +55,53 @@ export class CartScreen extends Component {
    */
   cartItemCountSubcriber;
   
+  updateQty(product, qty) {
+    ProductService.updateCart(product, qty);
+  }
+
   render() {
     return (
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1 }}>
           <FlatList
-            data={this.state.cartItems}
+            data={this.state.cart.items}
             keyExtractor={(info, index) => index}
             renderItem={itemInfo => (
-              <View style={{ height: 72, alignItems: 'center', flexDirection: 'row' }}>
+              <View style={{ height: 48, alignItems: 'center', flexDirection: 'row' }}>
                 <View style={{ flex: 1, paddingLeft: 16 }}>
                   <Text style={{ color: 'black', opacity: 0.87, fontSize: 16 }}>{itemInfo.item.name}</Text>
-                  <Text style={{ color: 'black', opacity: 0.70, fontSize: 14 }}>Qty: {itemInfo.item.qty}</Text>
+                  {/* <Text style={{ color: 'black', opacity: 0.70, fontSize: 14 }}>Qty: {itemInfo.item.qty}</Text> */}
                 </View>
                 <View style={{ paddingLeft: 16, paddingRight: 16 }}>
-                  <TouchableNativeFeedback onPress={() => { ProductService.removeProductFromCart(itemInfo.item.id); }}>
-                    <View style={{ padding: 16, justifyContent: 'center', opacity: 0.54 }} >
-                      <Icon name="delete" size={25} color={'black'} />
+                  <View style={{ justifyContent: 'flex-end', flexDirection: 'row', alignItems: 'center' }} >
+                    <Text style={{ fontSize: 14, color: 'black', opacity: 0.70 }}>$ {itemInfo.item.price} x </Text>
+                    <QuantityButton value={itemInfo.item.qty} onChangeValue={qty => this.updateQty(itemInfo.item, qty)} />
+                    <View style={{ width: 60, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, color: 'black', opacity: 0.87 }}>$ {itemInfo.item.totalPrice}</Text>
                     </View>
-                  </TouchableNativeFeedback>
+                  </View>
                 </View>
               </View>
             )}
             ItemSeparatorComponent={() => (
               <View style={{ height: 1, backgroundColor: 'black', opacity: 0.12 }} />
+            )}
+            ListFooterComponent={() => (
+              <View>
+                <View style={{ height: 1, backgroundColor: 'black', opacity: 0.12 }} />
+                <View style={{ height: 48, alignItems: 'center', flexDirection: 'row' }}>
+                  <View style={{ flex: 1, paddingLeft: 16 }}>
+                    <Text style={{ color: 'black', opacity: 0.87, fontSize: 16, fontWeight: 'bold' }}>Total</Text>
+                  </View>
+                  <View style={{ paddingLeft: 16, paddingRight: 16 }}>
+                    <View style={{ justifyContent: 'flex-end', flexDirection: 'row', alignItems: 'center' }} >
+                      <View style={{ width: 60, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, color: 'black', opacity: 0.87, fontWeight: 'bold' }}>$ {this.state.cart.price}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
             )}
           />
         </View>

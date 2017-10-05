@@ -50,7 +50,8 @@ export class HomeScreen extends Component {
       isLoading: true,
       cartItemCount: 0,
       viewCartBottom: new Animated.Value(-56),
-      value: 1
+      value: 1,
+      cart: null,
     };
   }
 
@@ -69,20 +70,18 @@ export class HomeScreen extends Component {
         });
       });
 
-    this.cartItemCountSubcriber = ProductService.cartItemCount$.subscribe(count => {
+    this.cartItemCountSubcriber = ProductService.cart$.subscribe(cart => {
       this.setState({
-        cartItemCount: count
+        cart
       });
 
-      const toValue = count === 0 ? -56 : 0;
-      if (count !== 0) {
-        Animated.timing(this.state.viewCartBottom,
-          {
-            toValue,
-            duration: 200,
-          }
-        ).start();
-      }
+      const toValue = cart.count === 0 ? -56 : 0;
+      Animated.timing(this.state.viewCartBottom,
+        {
+          toValue,
+          duration: 200,
+        }
+      ).start();
     });
   }
 
@@ -99,15 +98,17 @@ export class HomeScreen extends Component {
     ProductService.addProductToCart(id, name);
   }
 
-  updateQty(product, value) {
+  updateQty(product, qty) {
     const products = this.state.products;
-    product.qty += value;
+    product.qty = qty;
 
-    if (value === 1) {
-      ProductService.addProductToCart(product.id, product.name);
-    } else {
-      ProductService.removeProductFromCart(product.id);
-    }
+    // if (value === 1) {
+    //   ProductService.addProductToCart(product.id, product.name);
+    // } else {
+    //   ProductService.removeProductFromCart(product.id);
+    // }
+
+    ProductService.updateCart(product, qty);
 
     this.setState({
       products: [...products]
@@ -143,7 +144,7 @@ export class HomeScreen extends Component {
               </View>
               <View style={{ paddingLeft: 16, paddingRight: 16 }}>
                 {/* <Button title="Add to cart" onPress={() => { this.addToCart(itemInfo.item.id, itemInfo.item.name); }} color={'#009688'} /> */}
-                <QuantityButton value={itemInfo.item.qty} onChangeValue={value => this.updateQty(itemInfo.item, value)} />
+                <QuantityButton value={itemInfo.item.qty} onChangeValue={qty => this.updateQty(itemInfo.item, qty)} />
               </View>
             </View>
           )}
@@ -154,16 +155,22 @@ export class HomeScreen extends Component {
             <View style={{ height: 56 }} />
           )}
         />
-        {(this.state.cartItemCount !== 0 || true) && <TouchableNativeFeedback onPress={() => { this.props.navigation.navigate('Cart'); }}>
-          <Animated.View style={{ flexDirection: 'row', position: 'absolute', left: 0, right: 0, bottom: this.state.viewCartBottom, height: 56, backgroundColor: '#009688', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <View>
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>View Cart</Text>
+        <TouchableNativeFeedback onPress={() => { this.props.navigation.navigate('Cart'); }}>
+          <Animated.View style={{ flexDirection: 'row', position: 'absolute', left: 0, right: 0, bottom: this.state.viewCartBottom, height: 56, backgroundColor: '#009688' }}>
+            <View style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', paddingLeft: 16 }}>
+              <Text style={{ color: 'white', fontSize: 12 }}>{this.state.cart.count} Items in cart</Text>
+              <Text style={{ color: 'white', fontSize: 16 }}>$ {this.state.cart.price}</Text>
             </View>
-            <View style={{ padding: 8 }}>
-              <Icon name="arrow-forward" size={25} color={'white'} />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <View>
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>View Cart</Text>
+              </View>
+              <View style={{ padding: 8 }}>
+                <Icon name="arrow-forward" size={25} color={'white'} />
+              </View>
             </View>
           </Animated.View>
-        </TouchableNativeFeedback>}
+        </TouchableNativeFeedback>
       </View>
     );
   }
